@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     seed_on_startup: bool = False
 
+    # Carpeta donde se guardan las fotos de productos (en Docker va montada como volumen).
+    uploads_dir: str = "uploads"
+
     # Primer administrador (dueño) — se crea al arrancar si la instalación no tiene ninguno.
     # En cada instalación solo puede existir UN administrador; los cajeros se crean desde la app.
     admin_email: str = "admin@novus.dev"

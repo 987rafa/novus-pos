@@ -1,5 +1,5 @@
 import type {
-  InputHTMLAttributes,
+  ComponentProps,
   ReactNode,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
@@ -18,7 +18,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
   )
 }
 
-export function Input({ className = '', ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ className = '', ...rest }: ComponentProps<'input'>) {
   return <input className={`${controlClasses} ${className}`} {...rest} />
 }
 

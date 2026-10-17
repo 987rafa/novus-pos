@@ -78,6 +78,7 @@ def run_seed() -> None:
         products = [
             Product(
                 sku=sku,
+                barcode=f"77020010{index:05d}",
                 name=name,
                 category=category,
                 price_cents=price * 100,
@@ -85,7 +86,7 @@ def run_seed() -> None:
                 stock=stock,
                 min_stock=min_stock,
             )
-            for sku, name, category, price, cost, stock, min_stock in PRODUCTS
+            for index, (sku, name, category, price, cost, stock, min_stock) in enumerate(PRODUCTS, start=1)
         ]
         db.add_all(products)
         db.flush()
@@ -113,15 +114,24 @@ def run_seed() -> None:
             picks = rng.sample(products, k=rng.randint(1, 4))
             items = [SaleItemIn(product_id=product.id, qty=rng.randint(1, 3)) for product in picks]
             customer = rng.choice(customers) if rng.random() < 0.7 else None
+            payment = rng.choices(["cash", "transfer", "card"], weights=[6, 3, 1])[0]
             try:
                 sale = create_sale(
                     db,
                     seller,
-                    SaleCreate(customer_id=customer.id if customer else None, items=items),
+                    SaleCreate(
+                        customer_id=customer.id if customer else None,
+                        payment_method=payment,
+                        items=items,
+                    ),
                 )
             except SaleError:
                 continue
             sale.created_at = when
+            if sale.payment_method == "cash":
+                received = ((sale.total_cents + 4_999) // 5_000) * 5_000
+                sale.cash_received_cents = received
+                sale.change_cents = received - sale.total_cents
             db.commit()
             created += 1
 

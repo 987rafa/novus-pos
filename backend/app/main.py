@@ -1,10 +1,12 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app import models  # noqa: F401 — importa los modelos para registrarlos en Base.metadata
-from app.api.routes import auth, customers, dashboard, products, sales, users
+from app.api.routes import auth, cash, customers, dashboard, products, sales, users
 from app.bootstrap import ensure_first_admin
 from app.core.config import settings
 from app.db.base import Base
@@ -32,9 +34,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+os.makedirs(settings.uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.uploads_dir), name="uploads")
+
 api = APIRouter(prefix="/api")
 api.include_router(auth.router)
 api.include_router(users.router)
+api.include_router(cash.router)
 api.include_router(products.router)
 api.include_router(customers.router)
 api.include_router(sales.router)

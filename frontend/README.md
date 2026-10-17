@@ -24,9 +24,11 @@ El backend debe estar corriendo en `http://127.0.0.1:8000` (ver `../backend`).
 
 - Login con roles (admin / cajero) y rutas protegidas
 - Usuarios (solo admin): dueño único de la instalación + cajeros vinculados a él
-- Punto de venta: grilla de productos, carrito, descuentos, IVA 19 % y cobro
-- Productos: CRUD, ajustes de stock y historial de movimientos
-- Ventas: historial con filtros, detalle y anulación (admin)
+- Punto de venta: grilla de productos con fotos, carrito, descuentos, IVA 19 %, métodos de pago (efectivo con recibido/cambio, transferencia, tarjeta) y recibo imprimible
+- Escáner de código de barras: el lector USB escribe el código y con Enter el producto entra al carrito (búsqueda exacta por EAN-13 o SKU)
+- Productos: CRUD, código de barras, foto del producto (JPG/PNG/WebP, máx. 2 MB), ajustes de stock e historial de movimientos
+- Caja: apertura del turno con base inicial, cierre con arqueo (contado vs esperado) e historial de turnos
+- Ventas: historial con filtros, detalle (método de pago, recibido y cambio), reimpresión de recibo y anulación (admin)
 - Clientes: CRUD con búsqueda
 - Dashboard: ventas de hoy/mes, serie de 14 días, top productos y stock bajo
 

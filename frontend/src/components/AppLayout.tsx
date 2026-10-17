@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   UserCog,
   Users,
+  Wallet,
   X,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -18,6 +19,7 @@ import { Badge } from './ui/Badge'
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, adminOnly: false },
   { to: '/pos', label: 'Punto de venta', icon: ShoppingCart, end: false, adminOnly: false },
+  { to: '/caja', label: 'Caja', icon: Wallet, end: false, adminOnly: false },
   { to: '/productos', label: 'Productos', icon: Package, end: false, adminOnly: false },
   { to: '/ventas', label: 'Ventas', icon: Receipt, end: false, adminOnly: false },
   { to: '/clientes', label: 'Clientes', icon: Users, end: false, adminOnly: false },

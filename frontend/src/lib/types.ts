@@ -17,8 +17,10 @@ export interface TokenOut {
 export interface Product {
   id: number
   sku: string
+  barcode: string | null
   name: string
   category: string
+  image_url: string | null
   price_cents: number
   cost_cents: number
   stock: number
@@ -68,6 +70,9 @@ export interface Sale {
   voided_at: string | null
   cashier_name: string | null
   customer: CustomerBrief | null
+  payment_method: 'cash' | 'transfer' | 'card'
+  cash_received_cents: number | null
+  change_cents: number | null
   subtotal_cents: number
   discount_cents: number
   tax_cents: number
@@ -117,4 +122,26 @@ export interface LowStockItem {
   name: string
   stock: number
   min_stock: number
+}
+
+export interface CashSession {
+  id: number
+  status: 'open' | 'closed'
+  opened_by_name: string
+  opened_at: string
+  opening_cents: number
+  closed_by_name: string | null
+  closed_at: string | null
+  expected_cents: number | null
+  counted_cents: number | null
+  difference_cents: number | null
+  note: string | null
+}
+
+export interface CashStatus {
+  is_open: boolean
+  session: CashSession | null
+  cash_sales_cents: number
+  cash_sales_count: number
+  expected_cents: number
 }

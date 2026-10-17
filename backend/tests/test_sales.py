@@ -83,3 +83,37 @@ def test_sales_list_and_detail(client, cashier_headers, product):
     detail = client.get(f"/api/sales/{sale['id']}", headers=cashier_headers)
     assert detail.status_code == 200
     assert detail.json()["items"][0]["qty"] == 1
+
+
+def test_sale_payment_defaults_to_cash(client, cashier_headers, product):
+    sale = _create_sale(client, cashier_headers, product.id, 1).json()
+    assert sale["payment_method"] == "cash"
+    assert sale["cash_received_cents"] is None
+    assert sale["change_cents"] is None
+
+
+def test_sale_with_transfer_and_card(client, cashier_headers, product):
+    for method in ("transfer", "card"):
+        sale = _create_sale(client, cashier_headers, product.id, 1, payment_method=method).json()
+        assert sale["payment_method"] == method
+        assert sale["cash_received_cents"] is None
+
+
+def test_sale_cash_with_change(client, cashier_headers, product):
+    sale = _create_sale(
+        client, cashier_headers, product.id, 1, payment_method="cash", cash_received_cents=200_000
+    ).json()
+    assert sale["total_cents"] == 119_000
+    assert sale["cash_received_cents"] == 200_000
+    assert sale["change_cents"] == 81_000
+
+
+def test_sale_cash_insufficient_received(client, cashier_headers, product):
+    response = _create_sale(
+        client, cashier_headers, product.id, 1, payment_method="cash", cash_received_cents=1_000
+    )
+    assert response.status_code == 400
+    assert "no alcanza" in response.json()["detail"]
+
+    products = client.get("/api/products", headers=cashier_headers).json()
+    assert products[0]["stock"] == 10  # la venta no se concretó

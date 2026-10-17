@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,6 +14,8 @@ class SaleItemIn(BaseModel):
 class SaleCreate(BaseModel):
     customer_id: int | None = None
     discount_cents: int = Field(default=0, ge=0)
+    payment_method: Literal["cash", "transfer", "card"] = "cash"
+    cash_received_cents: int | None = Field(default=None, ge=0)
     items: list[SaleItemIn] = Field(min_length=1)
 
 
@@ -34,6 +37,9 @@ class SaleOut(BaseModel):
     voided_at: datetime | None
     cashier_name: str | None
     customer: CustomerBrief | None
+    payment_method: str
+    cash_received_cents: int | None
+    change_cents: int | None
     subtotal_cents: int
     discount_cents: int
     tax_cents: int

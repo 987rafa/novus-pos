@@ -14,3 +14,21 @@ body,
 body {
   @apply bg-slate-100 text-slate-800 antialiased;
 }
+
+/* Impresión de tirillas: solo se imprime la zona #receipt-print */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt-print,
+  #receipt-print * {
+    visibility: visible;
+  }
+
+  #receipt-print {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+  }
+}

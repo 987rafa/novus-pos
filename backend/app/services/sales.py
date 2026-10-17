@@ -58,6 +58,13 @@ def create_sale(db: Session, cashier: User, data: SaleCreate) -> Sale:
     sale.tax_cents = tax
     sale.total_cents = taxable + tax
 
+    sale.payment_method = data.payment_method
+    if data.payment_method == "cash" and data.cash_received_cents is not None:
+        if data.cash_received_cents < sale.total_cents:
+            raise SaleError("El efectivo recibido no alcanza el total de la venta", 400)
+        sale.cash_received_cents = data.cash_received_cents
+        sale.change_cents = data.cash_received_cents - sale.total_cents
+
     db.add(sale)
     db.commit()
     db.refresh(sale)

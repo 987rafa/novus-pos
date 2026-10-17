@@ -1,3 +1,6 @@
+PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"novus-demo" * 8  # firma PNG válida para la validación
+
+
 def test_create_product_admin_records_initial_stock(client, admin_headers):
     response = client.post(
         "/api/products",
@@ -73,3 +76,106 @@ def test_update_product(client, admin_headers, product):
     )
     assert response.status_code == 200
     assert response.json()["price_cents"] == 120_000
+
+
+def test_create_product_with_barcode_and_lookup(client, admin_headers):
+    created = client.post(
+        "/api/products",
+        headers=admin_headers,
+        json={
+            "sku": "BAR-1",
+            "barcode": "7702001000001",
+            "name": "Producto con código",
+            "price_cents": 500_000,
+        },
+    )
+    assert created.status_code == 201
+    assert created.json()["barcode"] == "7702001000001"
+
+    found = client.get("/api/products/barcode/7702001000001", headers=admin_headers)
+    assert found.status_code == 200
+    assert found.json()["sku"] == "BAR-1"
+
+    search = client.get("/api/products?q=7702001000001", headers=admin_headers).json()
+    assert [item["sku"] for item in search] == ["BAR-1"]
+
+    missing = client.get("/api/products/barcode/0000000000000", headers=admin_headers)
+    assert missing.status_code == 404
+
+
+def test_barcode_lookup_falls_back_to_sku(client, admin_headers, product):
+    response = client.get("/api/products/barcode/TEST-1", headers=admin_headers)
+    assert response.status_code == 200
+    assert response.json()["id"] == product.id
+
+
+def test_duplicate_barcode_rejected(client, admin_headers):
+    first = client.post(
+        "/api/products",
+        headers=admin_headers,
+        json={"sku": "BAR-2", "barcode": "7709999999999", "name": "Uno", "price_cents": 100},
+    )
+    assert first.status_code == 201
+    second = client.post(
+        "/api/products",
+        headers=admin_headers,
+        json={"sku": "BAR-3", "barcode": "7709999999999", "name": "Dos", "price_cents": 100},
+    )
+    assert second.status_code == 409
+
+
+def test_update_product_clears_barcode_with_empty_string(client, admin_headers):
+    created = client.post(
+        "/api/products",
+        headers=admin_headers,
+        json={"sku": "BAR-4", "barcode": "7701111111111", "name": "Cuatro", "price_cents": 100},
+    ).json()
+    response = client.patch(
+        f"/api/products/{created['id']}", headers=admin_headers, json={"barcode": ""}
+    )
+    assert response.status_code == 200
+    assert response.json()["barcode"] is None
+
+
+def test_upload_product_image(client, admin_headers, product):
+    response = client.post(
+        f"/api/products/{product.id}/image",
+        headers=admin_headers,
+        files={"file": ("foto.png", PNG_BYTES, "image/png")},
+    )
+    assert response.status_code == 200
+    image_url = response.json()["image_url"]
+    assert image_url.startswith("/uploads/products/")
+    assert image_url.endswith(".png")
+
+    served = client.get(image_url)
+    assert served.status_code == 200
+    assert served.content == PNG_BYTES
+
+
+def test_upload_product_image_rejects_non_image(client, admin_headers, product):
+    response = client.post(
+        f"/api/products/{product.id}/image",
+        headers=admin_headers,
+        files={"file": ("nota.txt", b"hola", "text/plain")},
+    )
+    assert response.status_code == 400
+
+
+def test_upload_product_image_rejects_oversize(client, admin_headers, product):
+    big = b"\x89PNG\r\n\x1a\n" + b"0" * (2 * 1024 * 1024)
+    response = client.post(
+        f"/api/products/{product.id}/image",
+        headers=admin_headers,
+        files={"file": ("grande.png", big, "image/png")},
+    )
+    assert response.status_code == 400
+
+
+def test_cashier_cannot_upload_image(client, cashier_headers, product):
+    response = client.post(
+        f"/api/products/{product.id}/image",
+        headers=cashier_headers,
+        files={"file": ("foto.png", PNG_BYTES, "image/png")},
+    )
+    assert response.status_code == 403

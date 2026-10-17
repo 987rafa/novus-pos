@@ -16,6 +16,10 @@ class Sale(Base):
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True)
 
+    payment_method: Mapped[str] = mapped_column(String(20), default="cash", index=True)  # cash | transfer | card
+    cash_received_cents: Mapped[int | None] = mapped_column(Integer)  # efectivo recibido del cliente
+    change_cents: Mapped[int | None] = mapped_column(Integer)  # cambio entregado
+
     subtotal_cents: Mapped[int] = mapped_column(Integer, default=0)
     discount_cents: Mapped[int] = mapped_column(Integer, default=0)
     tax_cents: Mapped[int] = mapped_column(Integer, default=0)

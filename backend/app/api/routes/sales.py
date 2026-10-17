@@ -20,6 +20,9 @@ def sale_to_out(sale: Sale) -> SaleOut:
         voided_at=sale.voided_at,
         cashier_name=sale.user.name if sale.user else None,
         customer=CustomerBrief(id=sale.customer.id, name=sale.customer.name) if sale.customer else None,
+        payment_method=sale.payment_method,
+        cash_received_cents=sale.cash_received_cents,
+        change_cents=sale.change_cents,
         subtotal_cents=sale.subtotal_cents,
         discount_cents=sale.discount_cents,
         tax_cents=sale.tax_cents,
@@ -33,6 +36,7 @@ def register_sale(data: SaleCreate, db: Db, user: CurrentUser):
     try:
         sale = create_sale(db, user, data)
     except SaleError as err:
+        db.rollback()  # descarta cualquier cambio parcial (stock, movimientos)
         raise HTTPException(status_code=err.status_code, detail=err.message)
     return sale_to_out(sale)
 

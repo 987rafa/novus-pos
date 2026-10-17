@@ -13,8 +13,10 @@ class Product(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     sku: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    barcode: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)  # EAN-13/UPC (escáner)
     name: Mapped[str] = mapped_column(String(160), index=True)
     category: Mapped[str] = mapped_column(String(80), default="General", index=True)
+    image_url: Mapped[str | None] = mapped_column(String(255))  # foto del producto
     price_cents: Mapped[int] = mapped_column(Integer)  # precio de venta
     cost_cents: Mapped[int] = mapped_column(Integer, default=0)  # costo (para margen)
     stock: Mapped[int] = mapped_column(Integer, default=0)

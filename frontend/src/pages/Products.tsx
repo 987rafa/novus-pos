@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { History, PackagePlus, Pencil, Plus, Search } from 'lucide-react'
+import { History, Image as ImageIcon, PackagePlus, Pencil, Plus, Search, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../components/PageHeader'
 import { Badge, stockTone } from '../components/ui/Badge'
@@ -16,6 +16,7 @@ import type { Product, StockMovement } from '../lib/types'
 
 interface ProductFormState {
   sku: string
+  barcode: string
   name: string
   category: string
   pricePesos: string
@@ -27,6 +28,7 @@ interface ProductFormState {
 
 const emptyForm: ProductFormState = {
   sku: '',
+  barcode: '',
   name: '',
   category: 'General',
   pricePesos: '',
@@ -58,6 +60,8 @@ export function Products() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [form, setForm] = useState<ProductFormState>(emptyForm)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const [adjusting, setAdjusting] = useState<Product | null>(null)
   const [adjustKind, setAdjustKind] = useState<'purchase' | 'adjustment' | 'loss'>('purchase')
@@ -90,22 +94,34 @@ export function Products() {
   })
 
   const saveProduct = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const payload = {
         sku: form.sku.trim(),
+        barcode: form.barcode.trim(),
         name: form.name.trim(),
         category: form.category.trim() || 'General',
         price_cents: Math.round(Number(form.pricePesos || '0') * 100),
         cost_cents: Math.round(Number(form.costPesos || '0') * 100),
         min_stock: Math.max(0, Math.round(Number(form.minStock || '0'))),
       }
+      let product: Product
       if (editing) {
-        return api.patch<Product>(`/products/${editing.id}`, { ...payload, is_active: form.isActive })
+        product = await api.patch<Product>(`/products/${editing.id}`, {
+          ...payload,
+          is_active: form.isActive,
+        })
+      } else {
+        product = await api.post<Product>('/products', {
+          ...payload,
+          stock: Math.max(0, Math.round(Number(form.stock || '0'))),
+        })
       }
-      return api.post<Product>('/products', {
-        ...payload,
-        stock: Math.max(0, Math.round(Number(form.stock || '0'))),
-      })
+      if (imageFile) {
+        const data = new FormData()
+        data.append('file', imageFile)
+        product = await api.upload<Product>(`/products/${product.id}/image`, data)
+      }
+      return product
     },
     onSuccess: (product) => {
       toast.success(editing ? `Producto "${product.name}" actualizado` : `Producto "${product.name}" creado`)
@@ -138,16 +154,38 @@ export function Products() {
     },
   })
 
+  const onPickImage = (file: File | null) => {
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Formato no permitido: usa JPG, PNG o WebP')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('La imagen no puede superar 2 MB')
+      return
+    }
+    if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview)
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  const previewUrl = imagePreview ?? editing?.image_url ?? null
+
   const openCreate = () => {
     setEditing(null)
     setForm(emptyForm)
+    setImageFile(null)
+    setImagePreview(null)
     setFormOpen(true)
   }
 
   const openEdit = (product: Product) => {
     setEditing(product)
+    setImageFile(null)
+    setImagePreview(null)
     setForm({
       sku: product.sku,
+      barcode: product.barcode ?? '',
       name: product.name,
       category: product.category,
       pricePesos: String(Math.round(product.price_cents / 100)),
@@ -186,7 +224,7 @@ export function Products() {
             <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
             <Input
               className="pl-9"
-              placeholder="Buscar por nombre o SKU…"
+              placeholder="Buscar por nombre, SKU o código de barras…"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -237,9 +275,30 @@ export function Products() {
                   <tr key={product.id} className={product.is_active ? '' : 'opacity-60'}>
                     <td className="px-4 py-3 font-mono text-xs text-slate-500">{product.sku}</td>
                     <td className="px-4 py-3 font-medium text-slate-700">
-                      <span className="flex items-center gap-2">
-                        {product.name}
-                        {!product.is_active ? <Badge tone="slate">Inactivo</Badge> : null}
+                      <span className="flex items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt=""
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon className="size-4 text-slate-300" />
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2">
+                            {product.name}
+                            {!product.is_active ? <Badge tone="slate">Inactivo</Badge> : null}
+                          </span>
+                          {product.barcode ? (
+                            <span className="block font-mono text-[11px] text-slate-400">
+                              {product.barcode}
+                            </span>
+                          ) : null}
+                        </span>
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-500">{product.category}</td>
@@ -323,6 +382,14 @@ export function Products() {
               placeholder="GAS-400"
             />
           </Field>
+          <Field label="Código de barras" hint="Opcional — EAN-13 para el escáner de la caja">
+            <Input
+              className="font-mono"
+              value={form.barcode}
+              onChange={(event) => setForm({ ...form, barcode: event.target.value })}
+              placeholder="7702001000001"
+            />
+          </Field>
           <Field label="Nombre">
             <Input
               value={form.name}
@@ -378,6 +445,33 @@ export function Products() {
               />
             </Field>
           )}
+          <div className="sm:col-span-2">
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Foto del producto
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="size-6 text-slate-300" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50">
+                  <Upload className="size-4" />
+                  {previewUrl ? 'Cambiar imagen' : 'Subir imagen'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(event) => onPickImage(event.target.files?.[0] ?? null)}
+                  />
+                </label>
+                <p className="text-xs text-slate-400">JPG, PNG o WebP · máx. 2 MB</p>
+              </div>
+            </div>
+          </div>
         </div>
       </Modal>
 

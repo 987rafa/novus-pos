@@ -14,34 +14,39 @@
 
 </div>
 
-Full-stack point of sale and inventory system for small shops (tiendas, panaderías, minimercados): register sales from a cart with automatic 19 % VAT, keep stock under control with a full movement history, and watch the business with a real-time dashboard.
+Full-stack point of sale and inventory system for small shops (tiendas, panaderías, minimercados): ring up sales with barcode scanning (USB scanner ready), take payments in cash, transfer or card with automatic change, run cash register sessions with an audit at closing time, print receipts, keep stock under control with a full movement history, and watch the business with a real-time dashboard.
 
 > 🇪🇸 [Leer en español](README.es.md)
 
 ## 📸 Screenshots
 
-| Dashboard | Point of sale |
+| Dashboard | Point of sale — barcode scan, cash change |
 | --- | --- |
 | ![Dashboard](docs/shots/02-dashboard.png) | ![POS](docs/shots/03-pos.png) |
 
-| Products & inventory | Sale detail |
+| Cash register session (opening + audit) | Printable receipt |
 | --- | --- |
-| ![Products](docs/shots/04-productos.png) | ![Sale detail](docs/shots/06-venta-detalle.png) |
+| ![Cash register](docs/shots/09-caja.png) | ![Receipt](docs/shots/10-recibo.png) |
 
-| Users & cashiers | Sales history |
+| Products & inventory (with photos) | Users & cashiers |
 | --- | --- |
-| ![Users](docs/shots/08-usuarios.png) | ![Sales](docs/shots/05-ventas.png) |
+| ![Products](docs/shots/04-productos.png) | ![Users](docs/shots/08-usuarios.png) |
 
 ## ✨ Features
 
 - 🖥️ **Web UI in Spanish** (React + TypeScript, mobile-friendly): POS screen with cart, product & stock management, users (owner + linked cashiers), sales history and analytics dashboard
 - 🛒 **Sales with cart** — multi-item sales, per-sale discounts, 19 % VAT applied automatically, stock validated & decremented in a single transaction
+- 🏷️ **Barcode scanning** — EAN-13 barcode per product; a USB scanner simply types the code and Enter drops the product straight into the cart (exact-match lookup API included)
+- 📷 **Product photos** — upload JPG/PNG/WebP images (≤ 2 MB) from the UI, validated by real file signature (not just the extension) and served by the API
+- 💳 **Payment methods** — cash (amount received + automatic change), transfer or card; stored on every sale and printed on the receipt
+- 💰 **Cash register sessions** — open a shift with an opening float, see the live expected amount (float + cash sales) and close it with an audit (counted vs expected, difference logged); one open session per installation
+- 🧾 **Printable receipt** — on-screen ticket with store, items, VAT, payment, received & change; print CSS keeps only the ticket on paper
 - 📦 **Inventory with audit trail** — every entry/exit is logged (initial stock, purchases, adjustments, losses, sales, voids); low-stock alerts with configurable minimums
 - ↔️ **Void & restock** — cancel a sale (admin only) and stock flows back, fully logged
 - 👥 **Customers** — optional customer on each sale, search by name or phone
 - 📊 **Dashboard analytics** — sales today/month, 14-day series, top products, low-stock list
 - 🔐 **JWT auth with roles** — exactly **one administrator (the owner)** per installation + cashiers linked to the owner; passwords hashed with argon2
-- 🧪 **Tested** — 26-test pytest suite covering auth, products, stock movements, sales and dashboard
+- 🧪 **Tested** — 51-test pytest suite covering auth, products, barcodes & image upload, stock movements, sales, payments, cash register and dashboard
 - 🐳 **One command to run** — Docker Compose (web + API + PostgreSQL)
 
 ## 🧰 Stack
@@ -94,7 +99,7 @@ npm run dev
 ## 🧪 Tests
 
 ```bash
-cd backend && python -m pytest -q   # 26 tests
+cd backend && python -m pytest -q   # 51 tests
 cd frontend && npm run build        # type-check + production build
 ```
 
@@ -103,9 +108,10 @@ cd frontend && npm run build        # type-check + production build
 | Area | Endpoints |
 | --- | --- |
 | Auth | `POST /api/auth/login` · `GET /api/auth/me` |
-| Products | CRUD + `POST /api/products/{id}/stock-adjust` · `GET /api/products/{id}/movements` |
+| Products | CRUD + `GET /api/products/barcode/{code}` · `POST /api/products/{id}/image` · `POST /api/products/{id}/stock-adjust` · `GET /api/products/{id}/movements` |
 | Customers | CRUD with search |
-| Sales | `POST /api/sales` · list/detail · `POST /api/sales/{id}/void` (admin) |
+| Sales | `POST /api/sales` (payment method + cash change) · list/detail · `POST /api/sales/{id}/void` (admin) |
+| Cash register | `GET /api/cash/status` · `POST /api/cash/open` · `POST /api/cash/close` (audit) · `GET /api/cash/sessions` |
 | Dashboard | `summary` · `sales-series` · `top-products` · `low-stock` |
 | Users | admin-only: list · create linked cashiers · update/deactivate (single admin per installation) |
 
@@ -115,6 +121,7 @@ Full interactive reference at `/docs` (OpenAPI/Swagger).
 
 - [x] Backend API: sales, inventory, dashboard, roles & tests
 - [x] Web UI (React + TypeScript): POS screen, products, sales, customers, dashboard
+- [x] Cash register block: barcodes & USB scanner, product photos, payment methods, cash sessions with audit, printable receipt
 - [ ] Live demo
 - [ ] WhatsApp orders — incoming orders flow straight into the POS (pairs with [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent))
 

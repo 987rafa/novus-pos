@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Eye, XCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, Printer, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { PageHeader } from '../components/PageHeader'
+import { ReceiptModal, methodLabels } from '../components/Receipt'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -26,6 +27,7 @@ export function Sales() {
   const [offset, setOffset] = useState(0)
   const [selected, setSelected] = useState<Sale | null>(null)
   const [voiding, setVoiding] = useState<Sale | null>(null)
+  const [receiptSale, setReceiptSale] = useState<Sale | null>(null)
 
   const sales = useQuery({
     queryKey: ['sales', status, offset],
@@ -107,6 +109,9 @@ export function Sales() {
                     </td>
                     <td className="px-4 py-3 font-semibold text-slate-700">
                       {cop(sale.total_cents)}
+                      <span className="block text-[11px] font-normal text-slate-400">
+                        {methodLabels[sale.payment_method]}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       {sale.status === 'completed' ? (
@@ -243,25 +248,44 @@ export function Sales() {
                 <span>IVA (19 %)</span>
                 <span>{cop(selected.tax_cents)}</span>
               </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Pago</span>
+                <span>
+                  {methodLabels[selected.payment_method]}
+                  {selected.cash_received_cents !== null
+                    ? ` · recibido ${cop(selected.cash_received_cents)} · cambio ${cop(selected.change_cents ?? 0)}`
+                    : ''}
+                </span>
+              </div>
               <div className="flex justify-between pt-1 text-base font-bold text-slate-800">
                 <span>Total</span>
                 <span>{cop(selected.total_cents)}</span>
               </div>
             </div>
 
-            {isAdmin && selected.status === 'completed' ? (
+            <div className="flex gap-2">
               <Button
-                variant="danger"
-                className="w-full"
-                icon={<XCircle className="size-4" />}
-                onClick={() => {
-                  setVoiding(selected)
-                  setSelected(null)
-                }}
+                variant="secondary"
+                className="flex-1"
+                icon={<Printer className="size-4" />}
+                onClick={() => setReceiptSale(selected)}
               >
-                Anular venta y reponer stock
+                Imprimir recibo
               </Button>
-            ) : null}
+              {isAdmin && selected.status === 'completed' ? (
+                <Button
+                  variant="danger"
+                  className="flex-1"
+                  icon={<XCircle className="size-4" />}
+                  onClick={() => {
+                    setVoiding(selected)
+                    setSelected(null)
+                  }}
+                >
+                  Anular venta y reponer stock
+                </Button>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </Modal>
@@ -290,6 +314,8 @@ export function Sales() {
           todos los productos al inventario. Queda registrada en el historial de movimientos.
         </p>
       </Modal>
+
+      <ReceiptModal sale={receiptSale} open={receiptSale !== null} onClose={() => setReceiptSale(null)} />
     </div>
   )
 }

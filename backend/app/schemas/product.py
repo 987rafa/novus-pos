@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class ProductCreate(BaseModel):
     sku: str = Field(min_length=1, max_length=40)
+    barcode: str | None = Field(default=None, max_length=64)
     name: str = Field(min_length=1, max_length=160)
     category: str = Field(default="General", max_length=80)
     price_cents: int = Field(ge=0)
@@ -12,9 +13,16 @@ class ProductCreate(BaseModel):
     stock: int = Field(default=0, ge=0)
     min_stock: int = Field(default=5, ge=0)
 
+    @field_validator("barcode")
+    @classmethod
+    def barcode_normalizado(cls, value: str | None) -> str | None:
+        value = value.strip() if value else None
+        return value or None
+
 
 class ProductUpdate(BaseModel):
     sku: str | None = Field(default=None, min_length=1, max_length=40)
+    barcode: str | None = Field(default=None, max_length=64)
     name: str | None = Field(default=None, min_length=1, max_length=160)
     category: str | None = Field(default=None, max_length=80)
     price_cents: int | None = Field(default=None, ge=0)
@@ -22,14 +30,22 @@ class ProductUpdate(BaseModel):
     min_stock: int | None = Field(default=None, ge=0)
     is_active: bool | None = None
 
+    @field_validator("barcode")
+    @classmethod
+    def barcode_normalizado(cls, value: str | None) -> str | None:
+        value = value.strip() if value else None
+        return value or None
+
 
 class ProductOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     sku: str
+    barcode: str | None
     name: str
     category: str
+    image_url: str | None
     price_cents: int
     cost_cents: int
     stock: int

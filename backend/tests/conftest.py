@@ -6,6 +6,7 @@ _tmpdir = tempfile.mkdtemp(prefix="novus-pos-tests-")
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmpdir}/app.db"
 os.environ["SECRET_KEY"] = "test-secret-key-0123456789abcdef-0123456789"
 os.environ["SEED_ON_STARTUP"] = "false"
+os.environ["UPLOADS_DIR"] = f"{_tmpdir}/uploads"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

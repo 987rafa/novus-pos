@@ -5,6 +5,7 @@ import {
   Package,
   Receipt,
   ShoppingCart,
+  UserCog,
   Users,
   X,
 } from 'lucide-react'
@@ -15,11 +16,12 @@ import { initials } from '../lib/format'
 import { Badge } from './ui/Badge'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/pos', label: 'Punto de venta', icon: ShoppingCart, end: false },
-  { to: '/productos', label: 'Productos', icon: Package, end: false },
-  { to: '/ventas', label: 'Ventas', icon: Receipt, end: false },
-  { to: '/clientes', label: 'Clientes', icon: Users, end: false },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, adminOnly: false },
+  { to: '/pos', label: 'Punto de venta', icon: ShoppingCart, end: false, adminOnly: false },
+  { to: '/productos', label: 'Productos', icon: Package, end: false, adminOnly: false },
+  { to: '/ventas', label: 'Ventas', icon: Receipt, end: false, adminOnly: false },
+  { to: '/clientes', label: 'Clientes', icon: Users, end: false, adminOnly: false },
+  { to: '/usuarios', label: 'Usuarios', icon: UserCog, end: false, adminOnly: true },
 ]
 
 export function AppLayout() {
@@ -53,24 +55,26 @@ export function AppLayout() {
       </div>
 
       <nav className="mt-2 flex-1 space-y-1 px-3">
-        {navItems.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                isActive
-                  ? 'bg-indigo-600/90 text-white shadow-sm'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              }`
-            }
-          >
-            <Icon className="size-4" />
-            {label}
-          </NavLink>
-        ))}
+        {navItems
+          .filter(({ adminOnly }) => !adminOnly || user?.role === 'admin')
+          .map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  isActive
+                    ? 'bg-indigo-600/90 text-white shadow-sm'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`
+              }
+            >
+              <Icon className="size-4" />
+              {label}
+            </NavLink>
+          ))}
       </nav>
 
       <div className="border-t border-slate-800 p-4">

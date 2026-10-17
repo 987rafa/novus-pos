@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "NOVUS POS"
-    version: str = "0.1.0"
+    version: str = "0.3.0"
 
     database_url: str = "sqlite:///./novus-pos.db"
     secret_key: str = "dev-secret-change-me-please-0123456789abcdef"
@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     tax_rate: float = 0.19
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     seed_on_startup: bool = False
+
+    # Primer administrador (dueño) — se crea al arrancar si la instalación no tiene ninguno.
+    # En cada instalación solo puede existir UN administrador; los cajeros se crean desde la app.
+    admin_email: str = "admin@novus.dev"
+    admin_password: str = "Admin123*"
+    admin_name: str = "Administrador"
 
     @property
     def cors_origin_list(self) -> list[str]:

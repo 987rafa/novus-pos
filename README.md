@@ -28,19 +28,19 @@ Full-stack point of sale and inventory system for small shops (tiendas, panader�
 | --- | --- |
 | ![Products](docs/shots/04-productos.png) | ![Sale detail](docs/shots/06-venta-detalle.png) |
 
-| Sales history | Login |
+| Users & cashiers | Sales history |
 | --- | --- |
-| ![Sales](docs/shots/05-ventas.png) | ![Login](docs/shots/01-login.png) |
+| ![Users](docs/shots/08-usuarios.png) | ![Sales](docs/shots/05-ventas.png) |
 
 ## ✨ Features
 
-- 🖥️ **Web UI in Spanish** (React + TypeScript, mobile-friendly): POS screen with cart, product & stock management, sales history and analytics dashboard
+- 🖥️ **Web UI in Spanish** (React + TypeScript, mobile-friendly): POS screen with cart, product & stock management, users (owner + linked cashiers), sales history and analytics dashboard
 - 🛒 **Sales with cart** — multi-item sales, per-sale discounts, 19 % VAT applied automatically, stock validated & decremented in a single transaction
 - 📦 **Inventory with audit trail** — every entry/exit is logged (initial stock, purchases, adjustments, losses, sales, voids); low-stock alerts with configurable minimums
 - ↔️ **Void & restock** — cancel a sale (admin only) and stock flows back, fully logged
 - 👥 **Customers** — optional customer on each sale, search by name or phone
 - 📊 **Dashboard analytics** — sales today/month, 14-day series, top products, low-stock list
-- 🔐 **JWT auth with roles** — `admin` / `cashier`, passwords hashed with argon2
+- 🔐 **JWT auth with roles** — exactly **one administrator (the owner)** per installation + cashiers linked to the owner; passwords hashed with argon2
 - 🧪 **Tested** — 26-test pytest suite covering auth, products, stock movements, sales and dashboard
 - 🐳 **One command to run** — Docker Compose (web + API + PostgreSQL)
 
@@ -84,10 +84,12 @@ npm run dev
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Admin | `admin@novus.dev` | `Admin123*` |
+| Admin (owner) | `admin@novus.dev` | `Admin123*` |
 | Cashier | `caja@novus.dev` | `Caja123*` |
+| Cashier 2 | `caja2@novus.dev` | `Caja123*` |
 
-> ⚠️ Demo data only — change these before any real deployment.
+> ℹ️ Each installation has exactly **one administrator** (the owner). Cashiers are created from the **Users** section and stay linked to the owner — they cannot see or manage users.
+> ⚠️ Demo data only — change these before any real deployment (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 
 ## 🧪 Tests
 
@@ -105,7 +107,7 @@ cd frontend && npm run build        # type-check + production build
 | Customers | CRUD with search |
 | Sales | `POST /api/sales` · list/detail · `POST /api/sales/{id}/void` (admin) |
 | Dashboard | `summary` · `sales-series` · `top-products` · `low-stock` |
-| Users | admin-only CRUD |
+| Users | admin-only: list · create linked cashiers · update/deactivate (single admin per installation) |
 
 Full interactive reference at `/docs` (OpenAPI/Swagger).
 

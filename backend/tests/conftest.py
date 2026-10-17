@@ -52,12 +52,13 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
-def _create_user(db: Session, email: str, role: str, password: str) -> User:
+def _create_user(db: Session, email: str, role: str, password: str, owner_id: int | None = None) -> User:
     user = User(
         email=email,
         name=email.split("@")[0],
         role=role,
         hashed_password=hash_password(password),
+        owner_id=owner_id,
     )
     db.add(user)
     db.commit()
@@ -77,8 +78,8 @@ def admin(db_session) -> User:
 
 
 @pytest.fixture()
-def cashier(db_session) -> User:
-    return _create_user(db_session, "caja@test.dev", "cashier", "Caja123*")
+def cashier(db_session, admin) -> User:
+    return _create_user(db_session, "caja@test.dev", "cashier", "Caja123*", owner_id=admin.id)
 
 
 @pytest.fixture()

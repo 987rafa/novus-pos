@@ -54,10 +54,25 @@ def run_seed() -> None:
         admin = User(
             email="admin@novus.dev", name="Ana Admin", role="admin", hashed_password=hash_password("Admin123*")
         )
-        cashier = User(
-            email="caja@novus.dev", name="Carlos Caja", role="cashier", hashed_password=hash_password("Caja123*")
-        )
-        db.add_all([admin, cashier])
+        db.add(admin)
+        db.flush()
+        cashiers = [
+            User(
+                email="caja@novus.dev",
+                name="Carlos Caja",
+                role="cashier",
+                hashed_password=hash_password("Caja123*"),
+                owner_id=admin.id,
+            ),
+            User(
+                email="caja2@novus.dev",
+                name="Camila Cajera",
+                role="cashier",
+                hashed_password=hash_password("Caja123*"),
+                owner_id=admin.id,
+            ),
+        ]
+        db.add_all(cashiers)
         db.flush()
 
         products = [
@@ -94,13 +109,14 @@ def run_seed() -> None:
         created = 0
         for _ in range(70):
             when = now - timedelta(days=rng.randint(0, 13), hours=rng.randint(0, 10), minutes=rng.randint(0, 59))
+            seller = rng.choice(cashiers)
             picks = rng.sample(products, k=rng.randint(1, 4))
             items = [SaleItemIn(product_id=product.id, qty=rng.randint(1, 3)) for product in picks]
             customer = rng.choice(customers) if rng.random() < 0.7 else None
             try:
                 sale = create_sale(
                     db,
-                    cashier,
+                    seller,
                     SaleCreate(customer_id=customer.id if customer else None, items=items),
                 )
             except SaleError:
@@ -110,7 +126,7 @@ def run_seed() -> None:
             created += 1
 
         print(
-            "Seed OK — admin@novus.dev / Admin123* · caja@novus.dev / Caja123* · "
+            "Seed OK — admin@novus.dev / Admin123* · caja@novus.dev y caja2@novus.dev / Caja123* · "
             f"{len(products)} productos · {len(customers)} clientes · {created} ventas"
         )
     finally:

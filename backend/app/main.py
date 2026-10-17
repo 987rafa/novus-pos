@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401 — importa los modelos para registrarlos en Base.metadata
 from app.api.routes import auth, customers, dashboard, products, sales, users
+from app.bootstrap import ensure_first_admin
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
@@ -17,6 +18,7 @@ async def lifespan(_: FastAPI):
         from app.seed import run_seed
 
         run_seed()
+    ensure_first_admin()
     yield
 
 

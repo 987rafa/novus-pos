@@ -14,6 +14,7 @@ const Pos = lazy(() => import('./pages/Pos').then((m) => ({ default: m.Pos })))
 const Products = lazy(() => import('./pages/Products').then((m) => ({ default: m.Products })))
 const Sales = lazy(() => import('./pages/Sales').then((m) => ({ default: m.Sales })))
 const Customers = lazy(() => import('./pages/Customers').then((m) => ({ default: m.Customers })))
+const Users = lazy(() => import('./pages/Users').then((m) => ({ default: m.Users })))
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })))
 
 const queryClient = new QueryClient({
@@ -47,6 +48,7 @@ createRoot(document.getElementById('root')!).render(
                   <Route path="productos" element={<Products />} />
                   <Route path="ventas" element={<Sales />} />
                   <Route path="clientes" element={<Customers />} />
+                  <Route path="usuarios" element={<Users />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

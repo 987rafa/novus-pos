@@ -28,19 +28,19 @@ Sistema full-stack de punto de venta e inventario para negocios pequeños (tiend
 | --- | --- |
 | ![Productos](docs/shots/04-productos.png) | ![Detalle](docs/shots/06-venta-detalle.png) |
 
-| Historial de ventas | Inicio de sesión |
+| Usuarios y cajeros | Historial de ventas |
 | --- | --- |
-| ![Ventas](docs/shots/05-ventas.png) | ![Login](docs/shots/01-login.png) |
+| ![Usuarios](docs/shots/08-usuarios.png) | ![Ventas](docs/shots/05-ventas.png) |
 
 ## ✨ Funcionalidades
 
-- 🖥️ **Interfaz web en español** (React + TypeScript, adaptable a móvil): caja con carrito, gestión de productos y stock, historial de ventas y dashboard
+- 🖥️ **Interfaz web en español** (React + TypeScript, adaptable a móvil): caja con carrito, gestión de productos y stock, usuarios (dueño + cajeros), historial de ventas y dashboard
 - 🛒 **Ventas con carrito** — múltiples productos por venta, descuentos, IVA 19 % automático, stock validado y descontado en una sola transacción
 - 📦 **Inventario con auditoría** — cada entrada/salida queda registrada (stock inicial, compras, ajustes, mermas, ventas, anulaciones); alertas de stock bajo configurables
 - ↔️ **Anular y reponer** — cancela una venta (solo admin) y el stock vuelve solo, con registro
 - 👥 **Clientes** — cliente opcional por venta, búsqueda por nombre o teléfono
 - 📊 **Dashboard** — ventas de hoy/mes, serie de 14 días, productos más vendidos, lista de stock bajo
-- 🔐 **Login con roles** — `admin` / `cajero`, contraseñas con argon2
+- 🔐 **Login con roles** — exactamente **un administrador (el dueño)** por instalación + cajeros vinculados al dueño; contraseñas con argon2
 - 🧪 **Con pruebas** — suite de 26 tests sobre auth, productos, movimientos, ventas y dashboard
 - 🐳 **Un comando y listo** — Docker Compose (web + API + PostgreSQL)
 
@@ -84,10 +84,12 @@ npm run dev
 
 | Rol | Correo | Contraseña |
 | --- | --- | --- |
-| Admin | `admin@novus.dev` | `Admin123*` |
+| Admin (dueño) | `admin@novus.dev` | `Admin123*` |
 | Cajero | `caja@novus.dev` | `Caja123*` |
+| Cajero 2 | `caja2@novus.dev` | `Caja123*` |
 
-> ⚠️ Solo para demo — cámbialas antes de usarlo en serio.
+> ℹ️ Cada instalación tiene exactamente **un administrador** (el dueño). Los cajeros se crean desde **Usuarios** y quedan vinculados al dueño: no pueden ver ni gestionar usuarios.
+> ⚠️ Solo para demo — cámbialas antes de usarlo en serio (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 
 ## 🧪 Pruebas
 
@@ -105,7 +107,7 @@ cd frontend && npm run build        # type-check + build de producción
 | Clientes | CRUD con búsqueda |
 | Ventas | `POST /api/sales` · listado/detalle · `POST /api/sales/{id}/void` (admin) |
 | Dashboard | `summary` · `sales-series` · `top-products` · `low-stock` |
-| Usuarios | CRUD solo admin |
+| Usuarios | solo admin: listar · crear cajeros vinculados · editar/desactivar (un solo admin por instalación) |
 
 Referencia interactiva completa en `/docs` (OpenAPI/Swagger).
 

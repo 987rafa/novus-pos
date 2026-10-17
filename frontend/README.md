@@ -23,6 +23,7 @@ El backend debe estar corriendo en `http://127.0.0.1:8000` (ver `../backend`).
 ## Funcionalidades
 
 - Login con roles (admin / cajero) y rutas protegidas
+- Usuarios (solo admin): dueño único de la instalación + cajeros vinculados a él
 - Punto de venta: grilla de productos, carrito, descuentos, IVA 19 % y cobro
 - Productos: CRUD, ajustes de stock y historial de movimientos
 - Ventas: historial con filtros, detalle y anulación (admin)

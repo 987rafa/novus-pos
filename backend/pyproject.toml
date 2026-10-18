@@ -1,6 +1,6 @@
 [project]
 name = "novus-pos-backend"
-version = "0.3.0"
+version = "0.4.0"
 description = "NOVUS POS — API de punto de venta e inventario (FastAPI + SQLAlchemy)"
 requires-python = ">=3.12"
 dependencies = [

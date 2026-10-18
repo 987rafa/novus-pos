@@ -12,7 +12,9 @@ from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models import Customer, Product, StockMovement, User
+from app.schemas.order import OrderCreate, OrderItemIn
 from app.schemas.sale import SaleCreate, SaleItemIn
+from app.services.orders import OrderError, create_order
 from app.services.sales import SaleError, create_sale
 
 PRODUCTS = [
@@ -135,9 +137,34 @@ def run_seed() -> None:
             db.commit()
             created += 1
 
+        # Pedidos demo entrantes (WhatsApp/web) para probar la pantalla de Pedidos
+        demo_orders = [
+            ("whatsapp", "María Fernanda Ríos", "+57 310 555 0134", "Para recoger a las 5 pm", [(2, 1), (3, 2), (10, 2)]),
+            ("whatsapp", "Pedro Antonio Díaz", "+57 318 555 0512", None, [(0, 4), (9, 1)]),
+            ("web", "Luisa Gómez", "+57 300 555 0277", "Sin bolsas plásticas, por favor", [(4, 2), (7, 1)]),
+        ]
+        orders_created = 0
+        for channel, name, phone, note, picks in demo_orders:
+            try:
+                order = create_order(
+                    db,
+                    OrderCreate(
+                        channel=channel,
+                        customer_name=name,
+                        customer_phone=phone,
+                        note=note,
+                        items=[OrderItemIn(product_id=products[index].id, qty=qty) for index, qty in picks],
+                    ),
+                )
+            except OrderError:
+                continue
+            order.created_at = now - timedelta(minutes=rng.randint(3, 90))
+            db.commit()
+            orders_created += 1
+
         print(
             "Seed OK — admin@novus.dev / Admin123* · caja@novus.dev y caja2@novus.dev / Caja123* · "
-            f"{len(products)} productos · {len(customers)} clientes · {created} ventas"
+            f"{len(products)} productos · {len(customers)} clientes · {created} ventas · {orders_created} pedidos"
         )
     finally:
         db.close()

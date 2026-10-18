@@ -20,6 +20,7 @@ services:
       SECRET_KEY: change-me-in-production
       SEED_ON_STARTUP: "true"
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      ORDERS_API_KEY: pedidos-demo-key
     ports:
       - "8000:8000"
     volumes:

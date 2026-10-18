@@ -145,3 +145,38 @@ export interface CashStatus {
   cash_sales_count: number
   expected_cents: number
 }
+
+export type OrderStatus = 'pending' | 'confirmed' | 'rejected'
+export type OrderChannel = 'whatsapp' | 'web' | 'mostrador'
+
+export interface OrderItem {
+  id: number
+  product_id: number
+  product_name: string
+  qty: number
+  unit_price_cents: number
+  line_total_cents: number
+}
+
+export interface Order {
+  id: number
+  status: OrderStatus
+  channel: OrderChannel
+  customer_name: string
+  customer_phone: string | null
+  note: string | null
+  created_at: string
+  confirmed_at: string | null
+  rejected_at: string | null
+  rejected_reason: string | null
+  sale_id: number | null
+  subtotal_cents: number
+  tax_cents: number
+  total_cents: number
+  items: OrderItem[]
+}
+
+export interface OrderList {
+  total: number
+  items: Order[]
+}

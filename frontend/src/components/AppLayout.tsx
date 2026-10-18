@@ -1,4 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import {
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -13,12 +15,15 @@ import {
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { api } from '../lib/api'
 import { initials } from '../lib/format'
+import type { OrderList } from '../lib/types'
 import { Badge } from './ui/Badge'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, adminOnly: false },
   { to: '/pos', label: 'Punto de venta', icon: ShoppingCart, end: false, adminOnly: false },
+  { to: '/pedidos', label: 'Pedidos', icon: ClipboardList, end: false, adminOnly: false },
   { to: '/caja', label: 'Caja', icon: Wallet, end: false, adminOnly: false },
   { to: '/productos', label: 'Productos', icon: Package, end: false, adminOnly: false },
   { to: '/ventas', label: 'Ventas', icon: Receipt, end: false, adminOnly: false },
@@ -30,6 +35,14 @@ export function AppLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const pendingOrders = useQuery({
+    queryKey: ['orders', 'pending-count'],
+    queryFn: () => api.get<OrderList>('/orders?status=pending&limit=1'),
+    refetchInterval: 20_000,
+    enabled: Boolean(user),
+  })
+  const pendingCount = pendingOrders.data?.total ?? 0
 
   const handleLogout = () => {
     logout()
@@ -75,6 +88,11 @@ export function AppLayout() {
             >
               <Icon className="size-4" />
               {label}
+              {to === '/pedidos' && pendingCount > 0 ? (
+                <span className="ml-auto rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">
+                  {pendingCount}
+                </span>
+              ) : null}
             </NavLink>
           ))}
       </nav>

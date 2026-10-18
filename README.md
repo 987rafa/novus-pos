@@ -14,7 +14,7 @@
 
 </div>
 
-Full-stack point of sale and inventory system for small shops (tiendas, panaderías, minimercados): ring up sales with barcode scanning (USB scanner ready), take payments in cash, transfer or card with automatic change, run cash register sessions with an audit at closing time, print receipts, keep stock under control with a full movement history, and watch the business with a real-time dashboard.
+Full-stack point of sale and inventory system for small shops (tiendas, panaderías, minimercados): ring up sales with barcode scanning (USB scanner ready), take payments in cash, transfer or card with automatic change, run cash register sessions with an audit at closing time, print receipts, keep stock under control with a full movement history, watch the business with a real-time dashboard — and take **orders from WhatsApp** or the web that land in an orders queue and become a sale with one click.
 
 > 🇪🇸 [Leer en español](README.es.md)
 
@@ -32,10 +32,16 @@ Full-stack point of sale and inventory system for small shops (tiendas, panader�
 | --- | --- |
 | ![Products](docs/shots/04-productos.png) | ![Users](docs/shots/08-usuarios.png) |
 
+| Orders — WhatsApp / web → POS | Order detail: confirm into a sale or reject |
+| --- | --- |
+| ![Orders](docs/shots/11-pedidos.png) | ![Order detail](docs/shots/12-pedido-detalle.png) |
+
 ## ✨ Features
 
 - 🖥️ **Web UI in Spanish** (React + TypeScript, mobile-friendly): POS screen with cart, product & stock management, users (owner + linked cashiers), sales history and analytics dashboard
 - 🛒 **Sales with cart** — multi-item sales, per-sale discounts, 19 % VAT applied automatically, stock validated & decremented in a single transaction
+- 📥 **Incoming orders (WhatsApp / web)** — external channels (your WhatsApp bot or your website) create pending orders with an API key; the cashier confirms them into a real sale (stock, payment method, receipt) or rejects them with a reason. Pending count lives in the sidebar badge
+- 🔌 **Orders API for integrations** — `X-API-Key` auth (`ORDERS_API_KEY`), live catalog endpoint (prices + stock) and a clean confirm/reject flow; pairs with [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent)
 - 🏷️ **Barcode scanning** — EAN-13 barcode per product; a USB scanner simply types the code and Enter drops the product straight into the cart (exact-match lookup API included)
 - 📷 **Product photos** — upload JPG/PNG/WebP images (≤ 2 MB) from the UI, validated by real file signature (not just the extension) and served by the API
 - 💳 **Payment methods** — cash (amount received + automatic change), transfer or card; stored on every sale and printed on the receipt
@@ -46,7 +52,7 @@ Full-stack point of sale and inventory system for small shops (tiendas, panader�
 - 👥 **Customers** — optional customer on each sale, search by name or phone
 - 📊 **Dashboard analytics** — sales today/month, 14-day series, top products, low-stock list
 - 🔐 **JWT auth with roles** — exactly **one administrator (the owner)** per installation + cashiers linked to the owner; passwords hashed with argon2
-- 🧪 **Tested** — 51-test pytest suite covering auth, products, barcodes & image upload, stock movements, sales, payments, cash register and dashboard
+- 🧪 **Tested** — 66-test pytest suite covering auth, products, barcodes & image upload, stock movements, sales, payments, cash register, dashboard and incoming orders
 - 🐳 **One command to run** — Docker Compose (web + API + PostgreSQL)
 
 ## 🧰 Stack
@@ -96,10 +102,20 @@ npm run dev
 > ℹ️ Each installation has exactly **one administrator** (the owner). Cashiers are created from the **Users** section and stay linked to the owner — they cannot see or manage users.
 > ⚠️ Demo data only — change these before any real deployment (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 
+### Orders from WhatsApp (optional)
+
+Point the [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent) at this POS and customer orders land straight in the **Pedidos** queue:
+
+```env
+# whatsapp-ai-agent/.env
+POS_URL=http://localhost:8000   # this POS API
+POS_API_KEY=pedidos-demo-key    # == this POS ORDERS_API_KEY
+```
+
 ## 🧪 Tests
 
 ```bash
-cd backend && python -m pytest -q   # 51 tests
+cd backend && python -m pytest -q   # 66 tests
 cd frontend && npm run build        # type-check + production build
 ```
 
@@ -111,6 +127,7 @@ cd frontend && npm run build        # type-check + production build
 | Products | CRUD + `GET /api/products/barcode/{code}` · `POST /api/products/{id}/image` · `POST /api/products/{id}/stock-adjust` · `GET /api/products/{id}/movements` |
 | Customers | CRUD with search |
 | Sales | `POST /api/sales` (payment method + cash change) · list/detail · `POST /api/sales/{id}/void` (admin) |
+| Orders | external channels (`X-API-Key`): `POST /api/orders` · `GET /api/orders/catalog` — staff: list/detail · `POST /api/orders/{id}/confirm` · `POST /api/orders/{id}/reject` |
 | Cash register | `GET /api/cash/status` · `POST /api/cash/open` · `POST /api/cash/close` (audit) · `GET /api/cash/sessions` |
 | Dashboard | `summary` · `sales-series` · `top-products` · `low-stock` |
 | Users | admin-only: list · create linked cashiers · update/deactivate (single admin per installation) |
@@ -123,7 +140,7 @@ Full interactive reference at `/docs` (OpenAPI/Swagger).
 - [x] Web UI (React + TypeScript): POS screen, products, sales, customers, dashboard
 - [x] Cash register block: barcodes & USB scanner, product photos, payment methods, cash sessions with audit, printable receipt
 - [ ] Live demo
-- [ ] WhatsApp orders — incoming orders flow straight into the POS (pairs with [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent))
+- [x] WhatsApp orders — incoming orders flow straight into the POS (pairs with [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent))
 
 ## 📄 License
 

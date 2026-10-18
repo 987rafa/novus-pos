@@ -14,7 +14,7 @@
 
 </div>
 
-Sistema full-stack de punto de venta e inventario para negocios pequeños (tiendas, panaderías, minimercados): cobra ventas con escáner de código de barras (lector USB listo), recibe pagos en efectivo, transferencia o tarjeta con cambio automático, maneja turnos de caja con arqueo al cierre, imprime recibos, mantén el stock bajo control con historial completo de movimientos y mira el negocio en un dashboard en tiempo real.
+Sistema full-stack de punto de venta e inventario para negocios pequeños (tiendas, panaderías, minimercados): cobra ventas con escáner de código de barras (lector USB listo), recibe pagos en efectivo, transferencia o tarjeta con cambio automático, maneja turnos de caja con arqueo al cierre, imprime recibos, mantén el stock bajo control con historial completo de movimientos y mira el negocio en un dashboard en tiempo real — y recibe **pedidos por WhatsApp** o desde la web que caen en una cola y se convierten en venta con un clic.
 
 > 🇬🇧 [Read in English](README.md)
 
@@ -32,10 +32,16 @@ Sistema full-stack de punto de venta e inventario para negocios pequeños (tiend
 | --- | --- |
 | ![Productos](docs/shots/04-productos.png) | ![Usuarios](docs/shots/08-usuarios.png) |
 
+| Pedidos — WhatsApp / web → POS | Detalle del pedido: confirmar como venta o rechazar |
+| --- | --- |
+| ![Pedidos](docs/shots/11-pedidos.png) | ![Detalle del pedido](docs/shots/12-pedido-detalle.png) |
+
 ## ✨ Funcionalidades
 
 - 🖥️ **Interfaz web en español** (React + TypeScript, adaptable a móvil): caja con carrito, gestión de productos y stock, usuarios (dueño + cajeros), historial de ventas y dashboard
 - 🛒 **Ventas con carrito** — múltiples productos por venta, descuentos, IVA 19 % automático, stock validado y descontado en una sola transacción
+- 📥 **Pedidos entrantes (WhatsApp / web)** — canales externos (tu bot de WhatsApp o tu web) crean pedidos pendientes con una API key; caja los confirma como venta real (stock, pago, recibo) o los rechaza con motivo. El contador de pendientes vive en el menú
+- 🔌 **API de pedidos para integraciones** — autenticación por `X-API-Key` (`ORDERS_API_KEY`), endpoint de catálogo con precios y stock en vivo, y un flujo limpio de confirmar/rechazar; se conecta con [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent)
 - 🏷️ **Escáner de código de barras** — código EAN-13 por producto; el lector USB solo "escribe" el código y con Enter el producto cae al carrito (incluye endpoint de búsqueda exacta)
 - 📷 **Fotos de producto** — sube imágenes JPG/PNG/WebP (≤ 2 MB) desde la interfaz, validadas por firma real del archivo (no por extensión) y servidas por la API
 - 💳 **Métodos de pago** — efectivo (monto recibido y cambio automático), transferencia o tarjeta; quedan guardados en cada venta y en el recibo
@@ -46,7 +52,7 @@ Sistema full-stack de punto de venta e inventario para negocios pequeños (tiend
 - 👥 **Clientes** — cliente opcional por venta, búsqueda por nombre o teléfono
 - 📊 **Dashboard** — ventas de hoy/mes, serie de 14 días, productos más vendidos, lista de stock bajo
 - 🔐 **Login con roles** — exactamente **un administrador (el dueño)** por instalación + cajeros vinculados al dueño; contraseñas con argon2
-- 🧪 **Con pruebas** — suite de 51 tests sobre auth, productos, códigos de barras y fotos, movimientos, ventas, pagos, caja y dashboard
+- 🧪 **Con pruebas** — suite de 66 tests sobre auth, productos, códigos de barras y fotos, movimientos, ventas, pagos, caja, dashboard y pedidos entrantes
 - 🐳 **Un comando y listo** — Docker Compose (web + API + PostgreSQL)
 
 ## 🧰 Stack
@@ -96,10 +102,20 @@ npm run dev
 > ℹ️ Cada instalación tiene exactamente **un administrador** (el dueño). Los cajeros se crean desde **Usuarios** y quedan vinculados al dueño: no pueden ver ni gestionar usuarios.
 > ⚠️ Solo para demo — cámbialas antes de usarlo en serio (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 
+### Pedidos desde WhatsApp (opcional)
+
+Apunta el [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent) a este POS y los pedidos de tus clientes caen directo en la cola de **Pedidos**:
+
+```env
+# whatsapp-ai-agent/.env
+POS_URL=http://localhost:8000   # esta API del POS
+POS_API_KEY=pedidos-demo-key    # == la ORDERS_API_KEY de este POS
+```
+
 ## 🧪 Pruebas
 
 ```bash
-cd backend && python -m pytest -q   # 51 tests
+cd backend && python -m pytest -q   # 66 tests
 cd frontend && npm run build        # type-check + build de producción
 ```
 
@@ -111,6 +127,7 @@ cd frontend && npm run build        # type-check + build de producción
 | Productos | CRUD + `GET /api/products/barcode/{code}` · `POST /api/products/{id}/image` · `POST /api/products/{id}/stock-adjust` · `GET /api/products/{id}/movements` |
 | Clientes | CRUD con búsqueda |
 | Ventas | `POST /api/sales` (método de pago + cambio) · listado/detalle · `POST /api/sales/{id}/void` (admin) |
+| Pedidos | canales externos (`X-API-Key`): `POST /api/orders` · `GET /api/orders/catalog` — caja: listado/detalle · `POST /api/orders/{id}/confirm` · `POST /api/orders/{id}/reject` |
 | Caja | `GET /api/cash/status` · `POST /api/cash/open` · `POST /api/cash/close` (arqueo) · `GET /api/cash/sessions` |
 | Dashboard | `summary` · `sales-series` · `top-products` · `low-stock` |
 | Usuarios | solo admin: listar · crear cajeros vinculados · editar/desactivar (un solo admin por instalación) |
@@ -123,7 +140,7 @@ Referencia interactiva completa en `/docs` (OpenAPI/Swagger).
 - [x] Interfaz web (React + TypeScript): caja, productos, ventas, clientes y dashboard
 - [x] Bloque de caja: códigos de barras y lector USB, fotos de producto, métodos de pago, turnos de caja con arqueo y recibo imprimible
 - [ ] Demo en vivo
-- [ ] Pedidos por WhatsApp — los pedidos entran solos al POS (se conecta con [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent))
+- [x] Pedidos por WhatsApp — los pedidos entran solos al POS (se conecta con [whatsapp-ai-agent](https://github.com/987rafa/whatsapp-ai-agent))
 
 ## 📄 Licencia
 

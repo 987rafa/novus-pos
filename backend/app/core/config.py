@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "NOVUS POS"
-    version: str = "0.3.0"
+    version: str = "0.4.0"
 
     database_url: str = "sqlite:///./novus-pos.db"
     secret_key: str = "dev-secret-change-me-please-0123456789abcdef"
@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     admin_email: str = "admin@novus.dev"
     admin_password: str = "Admin123*"
     admin_name: str = "Administrador"
+
+    # Canales externos de pedidos (WhatsApp/web): deben enviar esta clave en el header X-API-Key.
+    # Si está vacía, la creación externa de pedidos queda deshabilitada.
+    orders_api_key: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:
